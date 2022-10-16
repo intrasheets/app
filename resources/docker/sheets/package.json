@@ -1,0 +1,16 @@
+{
+  "name": "intrasheets-server",
+  "title": "Intrasheets Server",
+  "description": "Intrasheets server requires a license. Please visit https://intrasheets.com",
+  "main": "dist/index.js",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "supervisor dist/index.js"
+  },
+  "dependencies": {
+    "@jspreadsheet/server": "^2.1.0"
+  },
+  "devDependencies": {
+    "supervisor": "^0.12.0"
+  }
+}
