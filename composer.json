@@ -1,5 +1,5 @@
 {
-    "name" : "sample-application",
+    "name" : "intrasheets/sample",
     "description" : "Sample application using intrasheets",
     "keywords" : [
         "online spreadsheet"
@@ -9,8 +9,7 @@
     "require" : {
         "bossanova/bossanova" : "dev-master",
         "phpmailer/phpmailer": "dev-master",
-        "sendgrid/sendgrid" : "~7.2.1",
-        "fzaninotto/faker": "^1.9"
+        "sendgrid/sendgrid" : "~7.2.1"
     },
     "autoload-dev" : {},
     "minimum-stability": "dev",

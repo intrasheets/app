@@ -23,7 +23,7 @@ services:
           PGADMIN_DEFAULT_PASSWORD: postgres
           PGADMIN_LISTEN_PORT: 80
         ports:
-        - "8035:80"
+        - 8082:80
         volumes:
         - database:/var/lib/postgresql/data
         links:
@@ -43,8 +43,8 @@ services:
     web:
       build: ./resources/docker/aws
       ports:
-        - 8080:80
-        - 8081:443
+        - 8000:80
+        - 8001:443
       volumes:
         - .:/var/www/html
       links:
@@ -70,7 +70,7 @@ services:
       links:
         - redis
       expose:
-        - "3000"
+        - 3000
       volumes:
         - .:/usr/src/app
 

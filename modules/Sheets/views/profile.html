@@ -1,0 +1,118 @@
+<form id="profile" style="width: 600px;" class="p20"></form>
+
+<script src="https://cdn.jsdelivr.net/npm/jsuites/dist/jsuites.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@jsuites/sha512@1.0.2/sha512.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+<script>
+let Component = function() {
+    var self = this;
+    var form = null;
+
+    self.createForm = function(o) {
+        form = jSuites.form(o, {
+            url: window.location.href + '/g',
+            onbeforesave: function(el, data) {
+                if (self.password.value) {
+                    var passwordConfirmation = self.passwordConfirmation.value;
+                    if (self.password.value != self.passwordConfirmation.value) {
+                        jSuites.alert(password.getAttribute('data-error'));
+                        return false;
+                    } else {
+                        data.user_password = jSuites.login.sha512(self.password.value);
+                    }
+                }
+
+                // Dont save this column in the database
+                data.user_signature = '';
+
+                return data;
+            },
+            onsave: function(a,b,c) {
+                // Toast
+                jSuites.notification(c);
+                // Reset tracker
+                setTimeout(function() {
+                    form.resetTracker();
+                }, 1000);
+            },
+        });
+
+        form.load();
+    }
+
+    self.focus = function(o) {
+        if (o.value.length > 1) {
+            o.setSelectionRange(0, o.value.length);
+            document.execCommand('copy');
+            jSuites.notification({ message: 'Copied to the clipboard' });
+        }
+    }
+
+    self.save = function() {
+        form.save();
+    }
+
+    self.generateApiKey = function() {
+        jSuites.ajax({
+            url: '/sheets/profile/api',
+            method: 'GET',
+            dataType: 'json',
+            success: function(result) {
+                if (result.key) {
+                    self.signature.value = result.key;
+                }
+            }
+        });
+    }
+
+    let template = `<div @ready="self.createForm(this)">
+        <div class="row">
+            <div class="column f1">
+                <div class='form-group'>
+                    <label>^^[Name]^^</label>
+                    <input type='text' name='user_name' data-validation='required' data-error='Name is required'>
+                </div>
+            </div><div class="column f1">
+                <div class='form-group'>
+                    <label>^^[E-mail]^^</label>
+                    <input type='text' name='user_email' data-validation='email' data-error='Email is required'>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="column f1">
+                <div class='form-group'>
+                    <label>^^[Password]^^</label>
+                    <input type='password' name='user_password' autocomplete="new-password" data-error="^^[Passwords are not matching]^^" @ref="self.password">
+                </div>
+            </div><div class="column f1">
+                <div class='form-group'>
+                    <label>^^[Confirm password]^^</label>
+                    <input type='password' autocomplete="new-password" @ref="self.passwordConfirmation">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="column f1">
+                <div class='form-group'>
+                    <label>^^[Intrasheets API Key]^^</label>
+                    <div class="row">
+                        <div class="column f1 mr1">
+                            <input type='text' name='user_signature' onfocus='self.focus(this)' @ref='self.signature' style='background-color: #eee;' readonly />
+                        </div><div class="column">
+                            <input type='button' value='Generate' onclick="self.generateApiKey()" class='jbutton dark' />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="button" value="Save" onclick='self.save()' class='jbutton dark' style='width: 120px;'>
+    </div>`;
+
+    return lemonade.element(template, self);
+}
+lemonade.render(Component, document.getElementById('profile'));
+</script>

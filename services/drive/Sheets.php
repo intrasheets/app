@@ -9,9 +9,4 @@ class Sheets extends Drive
         $users = new \models\drive\SheetsUsers;
         return $users->setTokenOnwer($sheet_user_id, $this->user_id);
     }
-
-    public function getToken($token)
-    {
-        return $this->model->getToken($token);
-    }
 }

@@ -1,0 +1,17 @@
+// Init
+Sheets(document.getElementById('content'), {
+    // Your cloud server URL
+    server: 'http://localhost:8000/',
+    // Spreadsheet GUID identifier
+    guid: '<?php echo $this->view['guid'] ?>',
+    // User signature provided by your backend
+    signature: '<?php echo $this->view['token'] ?>',
+    // Jspreadsheet License
+    license: '<?php echo $this->view['license'] ?>',
+    /* Google sheets API information */
+    clientId: '',
+    apiKey: '',
+    clientSecret: '',
+    redirectUri: 'http://localhost:8000/sheets',
+    errorUri: 'http://localhost:8000/sheets/error',
+});

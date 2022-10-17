@@ -21,7 +21,7 @@ class Drive extends Services
                 if ($this->token) {
                     $ret = $users->getByToken($row['sheet_id'], $this->token);
                     if ($ret) {
-                        if ($ret['user_id']) {
+                        if (isset($ret['user_id']) && $ret['user_id']) {
                             if ($ret['user_id'] === $this->user_id) {
                                 return $ret['sheet_user_level'];
                             }

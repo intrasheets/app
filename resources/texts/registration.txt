@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W5C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>^^[Registration]^^</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+
+<a href='https://jspreadsheet.com/'>
+<img src="https://jspreadsheet.com/jspreadsheet/logo.png">
+</a>
+
+<p><div style='background-color:#eee;height:1px;'></div></p>
+
+<p>^^[Dear]^^ [user_name],</p>
+
+<p>^^[Thank you for your registration. You can complete your registration by clicking on the link below or copying the following link in a web browser.]^^</p>
+
+<p><a href="[url]?h=[user_hash]">[url]?h=[user_hash]</a></p>
+
+<p>
+^^[Your credentials to the portal]^^:<br><br>
+<b>^^[Username]^^</b>: [user_email]<br>
+<b>^^[Password]^^</b>: [user_password]<br>
+</p>
+
+<p>^^[Best regards]^^,<br>
+^^[Jspreadsheet Team]^^</p>
+
+<p>^^[This message was sent to]^^ <a href="mailto:[user_email]">[user_email]</a>.</p>
+
+</body>
+</html>

@@ -2,5 +2,9 @@
 /.project
 /.buildpath
 /.idea
+/resources/docker/sheets/.env
 /resources/docker/sheets/node_modules/
-/public/templates/sheets/node_modules/
+/resources/docker/sheets/package-lock.json
+composer.lock
+/resources/docker/sheets/package-lock.json
+.env

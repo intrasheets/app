@@ -11,17 +11,58 @@ class Users extends Services
     public $model = null;
     public $permissions = null;
 
-    public function __construct()
-    {
-        parent::__construct();
-
-        $this->model = new \models\Users();
-        $this->permissions = new \models\Permissions();
-    }
-
     public function exists($k, $v)
     {
         return $this->model->exists($k, $v);
+    }
+
+    function processData($data) {
+        // Create a self contained JWT as Bearer
+        if (isset($data['user_signature']) && $data['user_signature']) {
+            $signature = [
+                'user_id' => $data['user_id'],
+                'user_signature' => $data['user_signature'],
+            ];
+
+            $jwt = new \bossanova\Jwt\Jwt;
+            $signature = $jwt->setToken($signature);
+        } else {
+            $signature = '';
+        }
+
+        $data['user_signature'] = $signature;
+        $data['user_password'] = '';
+
+        return $data;
+    }
+
+    public function api($user_id)
+    {
+        $signature = $this->guidv4();
+
+        // Create a self contained JWT as Bearer
+        $data = [
+            'user_id' => $user_id,
+            'user_signature' => $signature,
+        ];
+
+        $jwt = new \bossanova\Jwt\Jwt;
+        $jwt->user_signature = $signature;
+        $jwt->save();
+
+        $user = $this->model->get($user_id);
+        $user->user_signature = $signature;
+        $user->save();
+
+        // Update API
+        $user = new \models\drive\Signature;
+        $user->user_id = $user_id;
+        $user->user_signature = $signature;
+        $user->save();
+
+        $token = $jwt->setToken($data);
+
+        return [ 'key' => $token ];
     }
 
     /**
@@ -68,6 +109,8 @@ class Users extends Services
      */
     public function insert($row)
     {
+        $data = [];
+
         // Permission is a mandatory field
         if (isset($row['permission_id'])) {
             if ($row['permission_id'] && !$this->permissions->isAllowedHierarchy($row['permission_id'])) {
@@ -95,13 +138,17 @@ class Users extends Services
                     } else {
                         // Password
                         if (!isset($row['user_password']) || !$row['user_password']) {
-                            $row['user_password'] = substr(str_shuffle(str_repeat("0123456789abcdefghijklmnopqrstuvwxyz", 6)), 0, 6);
+                            $password = substr(str_shuffle(str_repeat("0123456789abcdefghijklmnopqrstuvwxyz", 6)), 0, 6);
+                        } else {
+                            $password = $row['user_password'];
                         }
 
                         $salt = hash('sha512', uniqid(mt_rand(1, mt_getrandmax()), true));
-                        $pass = hash('sha512', hash('sha512', $row['user_password']) . $salt);
+                        $pass = hash('sha512', hash('sha512', $password) . $salt);
                         $row['user_salt'] = $salt;
                         $row['user_password'] = $pass;
+                        $row['user_hash'] = hash('sha512', uniqid(mt_rand(1, mt_getrandmax()), true));
+                        $row['user_status'] = 2;
 
                         // Avoid errors
                         if (isset($row['user_id'])) {
@@ -128,6 +175,11 @@ class Users extends Services
 
                             // Loading registration text template
                             $content = file_get_contents($registrationFile);
+
+                            // Application
+                            $row['url'] = APPLICATION_URL . '/login';
+                            // Password plain
+                            $row['user_password'] = $password;
 
                             // Replace macros
                             $content = $this->mail->replaceMacros($content, $row);
@@ -177,7 +229,7 @@ class Users extends Services
         }
 
         if (count($data) > 0) {
-            if (!$this->permissions->isAllowedHierarchy($data['permission_id'])) {
+            if (! $this->permissions->isAllowedHierarchy($data['permission_id'])) {
                 $data = [
                     'error' => 1,
                     'message' => '^^[Permission denied]^^',
@@ -288,4 +340,11 @@ class Users extends Services
         return $data;
     }
 
+    public static function guidv4()
+    {
+        $data = openssl_random_pseudo_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
 }

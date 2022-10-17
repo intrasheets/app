@@ -23,8 +23,8 @@ class Users extends Model
     public function exists($k, $v)
     {
         $result = $this->database->Table($this->config->tableName)
-            ->column($this->config->primaryKey, true)
-            ->argument(1, "lower($k)", "lower($v)")
+            ->column("{$this->config->primaryKey}")
+            ->argument(1, "lower($k)", "lower('$v')")
             ->execute();
 
         return $this->database->fetch_assoc($result);
@@ -225,5 +225,8 @@ class Users extends Model
                 ->update()
                 ->execute();
         }
+    }
+
+    public function setLog() {
     }
 }

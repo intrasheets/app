@@ -12,6 +12,7 @@ Class Share
         1 => 'Viewer',
         2 => 'Editor',
         3 => 'Designer',
+        4 => 'Owner',
     ];
 
     public function __construct($guid) {
