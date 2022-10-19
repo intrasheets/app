@@ -9,7 +9,7 @@ services:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
       ports:
-        - 5400:5432
+        - 5401:5432
       volumes:
         - .:/var/www/html
         - database:/var/lib/postgresql/data
@@ -37,8 +37,8 @@ services:
     mailhog:
       image: mailhog/mailhog
       ports: 
-        - 1021:1025
-        - 8021:8025
+        - 1022:1025
+        - 8022:8025
 
     web:
       build: ./resources/docker/aws

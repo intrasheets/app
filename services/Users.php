@@ -42,7 +42,7 @@ class Users extends Services
 
         // Get the signed token
         $bearer = $jwt->setToken([
-            'exp' => date("Y-m-d H:i:s", strtotime("+1 minutes")),
+            'exp' => time() + 30,
             'user_id' => $user_id,
             'scope' => ['signature'],
         ]);
@@ -53,28 +53,28 @@ class Users extends Services
             $jwt->user_signature = $result;
             $jwt->save();
 
-            $user = $this->model->get($user_id);
-            $user->user_signature = $result;
-            $user->save();
-
-            return [ 'key' => $jwt->getToken(true) ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => 'Something went wrong.'
+            $signature = [
+                'user_id' => $user_id,
+                'user_signature' => $result,
             ];
+
+            $signature = $jwt->setToken($signature);
+
+            return [ 'key' => $signature ];
+        } else {
+            return $result;
         }
     }
 
     public function request($bearer) {
         $headers = [
             'Accept: text/json',
-            'Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJkb21haW4iOiJqc3ByZWFkc2hlZXQuY29tIiwidXNlcl9pZCI6MSwidXNlcl9sb2dpbiI6InBhdWxob2RlbCIsInVzZXJfbmFtZSI6IkpzcHJlYWRzaGVldCIsInVzZXJfc2lnbmF0dXJlIjoiYmIwZTc5ZmFmMzUwYmNlM2JhY2E5Y2RiMzdkMjhiNzdkNGFkMzliNCIsInBhcmVudF9pZCI6MCwicGVybWlzc2lvbl9pZCI6MSwibG9jYWxlIjoicHRfQlIiLCJleHBpcmF0aW9uIjoxNjY2MTAxNDgzLCJwZXJtaXNzaW9ucyI6W10sImNvdW50cnlfaWQiOjAsImhhc2giOiJGVDJpMmtDQUsxamFwQm41WUF6dkhmTlRHSWZoX2RPR1VMT2J2cTBYM2dOQk9rczZ3Ym5BcG5TNlFOUHE5VDVEMEN4T1J0RFRZc0x1VWsxMFROYnBFZyJ9.5VRmG_BnRzhtsLxgyYWeWct5BVGoyu1LLF6Xd0e4VTf0UeNcpcjmSrI5lkXf-iZfVdlOhaq7LZxI5L0omXG-vQ',
+            'Authorization: Bearer ' . $bearer,
             'Content-Type' => 'application/x-www-form-urlencoded'
         ];
 
         // URL
-        $curl = curl_init($_ENV['INTRASHEETS_SERVER']);
+        $curl = curl_init($_ENV['INTRASHEETS_SERVER'] . '/signature');
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_VERBOSE, true);
@@ -83,9 +83,9 @@ class Users extends Services
         $response = curl_exec($curl);
 
         if ($response) {
-            $data = json_decode($response);
-            if (isset($data['signature']) && $data['signature']) {
-                return $data['signature'];
+            $data = json_decode($response, true);
+            if (isset($data['data']) && isset($data['data']['signature']) && $data['data']['signature']) {
+                return $data['data']['signature'];
             }
         }
 
