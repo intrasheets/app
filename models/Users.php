@@ -23,7 +23,7 @@ class Users extends Model
     public function exists($k, $v)
     {
         $result = $this->database->Table($this->config->tableName)
-            ->column("{$this->config->primaryKey}")
+            ->column($this->config->primaryKey)
             ->argument(1, "lower($k)", "lower('$v')")
             ->execute();
 

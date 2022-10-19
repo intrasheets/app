@@ -49,6 +49,10 @@ class Users extends Services
 
         $result = $this->request($bearer);
         if ($result !== false) {
+            $user = $this->model->get($user_id);
+            $user->user_signature = $result;
+            $user->save();
+
             $jwt = new \bossanova\Jwt\Jwt;
             $jwt->user_signature = $result;
             $jwt->save();
