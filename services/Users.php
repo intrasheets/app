@@ -170,8 +170,8 @@ class Users extends Services
                             // If all success create an API signature as default
                             $intrasheets = new \services\Intrasheets;
                             $result = $intrasheets->requestKey($id);
-                            if ($result && isset($result['key'])) {
-                                $this->model->column(['user_signature'=>$result['key']])->update($id);
+                            if ($result && isset($result['success'])) {
+                                $this->model->column(['user_signature'=>$result['data']['signature']])->update($id);
                             }
 
                             $data = [
@@ -306,7 +306,7 @@ class Users extends Services
         $result = $intrasheets->requestKey($user_id);
         if ($result) {
             // Convert to array
-            $data = json_decode($result, true);
+            $data = $result;
 
             if (isset($data['data']) && isset($data['data']['signature']) && $data['data']['signature']) {
                 // Update the users table with the new signature

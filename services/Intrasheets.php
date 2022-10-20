@@ -28,7 +28,7 @@ class Intrasheets {
         $response = curl_exec($curl);
 
         if ($response) {
-            return $response;
+            return json_decode($response, true);
         }
 
         return false;
@@ -61,7 +61,7 @@ class Intrasheets {
      * @param $user_id - the user which is logged
      * @return array
      */
-    public function validateInvitation($token, $user_id=false)
+    public function validateInvitation($token, $user_id=false, $guid)
     {
         // Create JWT token
         $jwt = new \bossanova\Jwt\Jwt();
@@ -69,6 +69,7 @@ class Intrasheets {
         // Create bearer for the authentication
         $bearer = $jwt->createToken([
             'exp' => time() + 30,
+            'sheet_guid' => $guid,
             'user_id' => $user_id,
             'small_token' => $token,
             'scope' => ['invitation'],

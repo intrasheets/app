@@ -135,13 +135,13 @@ class Sheets extends Module
             // Process the invitation token
             if ($invitationToken = $this->getParam(2)) {
                 // Get a validation from the API
-                $invitation = $intrasheets->validateInvitation($invitationToken, $this->getUser());
+                $invitation = $intrasheets->validateInvitation($invitationToken, $this->getUser(), $guid);
                 // If validation is OK
-                if ($invitation && $invitation['sheet_id']) {
+                if ($invitation && isset($invitation['success'])) {
                     // If no bound userId or userId different from the API generate a invitation signature
-                    if (! $invitation['user_id'] || $invitation['user_id'] != $this->getUser()) {
-                        $bearer = $this->generateToken([
-                            'sheet_id' => $invitation['sheet_id'],
+                    if (! $this->getUser()) {
+                        $bearer = $jwt->createToken([
+                            'sheet_id' => $invitation['data']['sheet_id'],
                             'small_token' => $invitationToken,
                         ]);
                     }
