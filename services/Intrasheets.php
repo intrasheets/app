@@ -8,7 +8,7 @@ class Intrasheets {
 
     public function __construct()
     {
-        $this->server = $_ENV['INTRASHEETS_SERVER'];
+        $this->server = 'http://web/api';
     }
 
     public function request($url, $bearer) {
