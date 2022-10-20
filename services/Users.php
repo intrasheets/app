@@ -11,12 +11,13 @@ class Users extends Services
     public $model = null;
     public $permissions = null;
 
-    public function exists($k, $v)
+    /**
+     * Process the profile data before sending to the frontend
+     * @param $data
+     * @return mixed
+     */
+    function processData($data)
     {
-        return $this->model->exists($k, $v);
-    }
-
-    function processData($data) {
         // Create a self contained JWT as Bearer
         if (isset($data['user_signature']) && $data['user_signature']) {
             $signature = [
@@ -34,66 +35,6 @@ class Users extends Services
         $data['user_password'] = '';
 
         return $data;
-    }
-
-    public function api($user_id)
-    {
-        $jwt = new \bossanova\Jwt\Jwt();
-
-        // Get the signed token
-        $bearer = $jwt->setToken([
-            'exp' => time() + 30,
-            'user_id' => $user_id,
-            'scope' => ['signature'],
-        ]);
-
-        $result = $this->request($bearer);
-        if ($result !== false) {
-            $user = $this->model->get($user_id);
-            $user->user_signature = $result;
-            $user->save();
-
-            $jwt = new \bossanova\Jwt\Jwt;
-            $jwt->user_signature = $result;
-            $jwt->save();
-
-            $signature = [
-                'user_id' => $user_id,
-                'user_signature' => $result,
-            ];
-
-            $signature = $jwt->setToken($signature);
-
-            return [ 'key' => $signature ];
-        } else {
-            return $result;
-        }
-    }
-
-    public function request($bearer) {
-        $headers = [
-            'Accept: text/json',
-            'Authorization: Bearer ' . $bearer,
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ];
-
-        // URL
-        $curl = curl_init($_ENV['INTRASHEETS_SERVER'] . '/signature');
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($curl, CURLOPT_VERBOSE, true);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-        $response = curl_exec($curl);
-
-        if ($response) {
-            $data = json_decode($response, true);
-            if (isset($data['data']) && isset($data['data']['signature']) && $data['data']['signature']) {
-                return $data['data']['signature'];
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -226,6 +167,13 @@ class Users extends Services
                             // Send email
                             $this->mail->sendmail($t, EMAIL_REGISTRATION_SUBJECT, $content, $f);
 
+                            // If all success create an API signature as default
+                            $intrasheets = new \services\Intrasheets;
+                            $result = $intrasheets->requestKey($id);
+                            if ($result && isset($result['key'])) {
+                                $this->model->column(['user_signature'=>$result['key']])->update($id);
+                            }
+
                             $data = [
                                 'success' => 1,
                                 'message' => '^^[The user has been successfully created. An email has been sent to your email address and should be confirmed]^^',
@@ -348,34 +296,39 @@ class Users extends Services
     }
 
     /**
-     * Select Permissions
-     *
-     * @param integer $user_id
-     * @return array   $data
+     * Request a new access key and update the jwt and user profile
+     * @param $user_id
+     * @return array|boolean
      */
-    public function getPermissions($id = null)
+    public function generateKey($user_id)
     {
-        $permissions = $this->permissions->combo();
+        $intrasheets = new \services\Intrasheets;
+        $result = $intrasheets->requestKey($user_id);
+        if ($result) {
+            // Convert to array
+            $data = json_decode($result, true);
 
-        return count($permissions) > 0 ? $permissions : ['error' => 1, 'message' => '^^[No record found]^^'];
-    }
+            if (isset($data['data']) && isset($data['data']['signature']) && $data['data']['signature']) {
+                // Update the users table with the new signature
+                $user = $this->model->get($user_id);
+                $user->user_signature = $data['data']['signature'];
+                $user->save();
 
-    /**
-     * Check existing user
-     *
-     */
-    public function getById($id)
-    {
-        $data = $this->model->getById($id);
+                // Update the current token with the new signature
+                $jwt = new \bossanova\Jwt\Jwt;
+                $jwt->user_signature = $data['data']['signature'];
+                $jwt->save();
 
-        return $data;
-    }
+                // Return the new generated token
+                $signature = $jwt->setToken([
+                    'user_id' => $user_id,
+                    'user_signature' => $data['data']['signature'],
+                ]);
 
-    public static function guidv4()
-    {
-        $data = openssl_random_pseudo_bytes(16);
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+                return [ 'key' => $signature ];
+            }
+        }
+
+        return false;
     }
 }

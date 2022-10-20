@@ -41,14 +41,7 @@ class Sheets extends Module
             ];
 
             // Successfully created
-            $data = $service->insert($data);
-
-            // If all success create an API signature as default
-            if (isset($data['id']) && $data['id']) {
-                $service->api($data['id']);
-            }
-
-            return $data;
+            return $service->insert($data);
 
         } else {
             // Login
@@ -69,28 +62,38 @@ class Sheets extends Module
     }
 
     /**
+     * Generate a new API signature for the user
+     * @return array|false
+     */
+    public function key()
+    {
+        // Get the logged userId
+        if (! $user_id = $this->getUser()) {
+            return false;
+        }
+
+        $service = new \services\Users(new \models\Users);
+        return $service->generateKey($user_id);
+    }
+
+    /**
      * Profile updates and API Key generation
      */
     public function profile()
     {
         // Get the logged userId
-        if ($user_id = $this->getUser()) {
-            if ($this->isAjax()) {
-                // User services
-                $service = new \services\Users(new \models\Users);
+        if (! $user_id = $this->getUser()) {
+            return false;
+        }
 
-                if ($this->getParam(2) === 'api') {
-                    // Generate a new API signature for the user
-                    return $service->api($user_id);
-                } else {
-                    // Requirement for users profile update
-                    $service->permissions = new \models\Permissions;
-                    // Process the restful request
-                    return $this->processRestRequest($service, $user_id);
-                }
-            } else {
-                $this->setView('profile');
-            }
+        if ($this->isAjax()) {
+            // Process any request to the profile
+            $service = new \services\Users(new \models\Users);
+            $service->permissions = new \models\Permissions;
+            // Process the restful request
+            return $this->processRestRequest($service, $user_id);
+        } else {
+            $this->setView('profile');
         }
     }
 
@@ -101,15 +104,17 @@ class Sheets extends Module
     public function notify()
     {
         // Get the logged userId
-        if ($user_id = $this->getUser()) {
-            // Get the information about the guid
-            $service = new \services\drive\Sheets(new \models\drive\Sheets);
-            $row = $service->getByGuid($this->getParam(2));
-            // If the user is logged and he is the owner
-            if ($user_id && $row['user_id'] === $user_id) {
-                $share = new \services\drive\Share($this->getParam(2));
-                return $share->invite($this->getPost('users'));
-            }
+        if (! $user_id = $this->getUser()) {
+            return false;
+        }
+
+        // Get the information about the guid
+        $service = new \services\drive\Sheets(new \models\drive\Sheets);
+        $row = $service->getByGuid($this->getParam(2));
+        // If the user is logged and he is the owner
+        if ($user_id && $row['user_id'] === $user_id) {
+            $share = new \services\drive\Share($this->getParam(2));
+            return $share->invite($this->getPost('users'));
         }
     }
 
@@ -118,45 +123,51 @@ class Sheets extends Module
      */
     public function config()
     {
-        $token = null;
-
-        $jwt = new \bossanova\Jwt\Jwt;
-
-        $service = new \services\drive\Sheets(new \models\drive\Sheets);
-        $service->user_id = $this->getUser();
-
-        // Request invitation token
-        $service->token = $this->getParam(2);
+        // Authentication
+        $bearer = null;
+        // JWT class
+        $jwt = new \bossanova\Jwt\Jwt();
+        // Intrasheets API
+        $intrasheets = new \services\Intrasheets;
 
         // If the user request access to a spreadsheet by guid
         if ($guid = $this->getParam(1)) {
-            // There is no valid access to access this resource
-            if ($service->getAccess($guid) === false) {
-                header('HTTP/1.0 403 Forbidden');
-                die("<h1>Forbidden</h1><p>You don't have permission to access the request resource.</p>");
-            } else {
-                // Process invitation token
-                if ($this->getParam(2)) {
-                    // Get the information about the guid
-                    $row = $service->getByGuid($this->getParam(1));
-                    // Generate a invitation token
-                    $data = [
-                        'sheet_id' => $row['sheet_id'],
-                        'small_token' => $service->token,
-                    ];
-                    $token = $jwt->setToken($data);
+            // Process the invitation token
+            if ($invitationToken = $this->getParam(2)) {
+                // Get a validation from the API
+                $invitation = $intrasheets->validateInvitation($invitationToken, $this->getUser());
+                // If validation is OK
+                if ($invitation && $invitation['sheet_id']) {
+                    // If no bound userId or userId different from the API generate a invitation signature
+                    if (! $invitation['user_id'] || $invitation['user_id'] != $this->getUser()) {
+                        $bearer = $this->generateToken([
+                            'sheet_id' => $invitation['sheet_id'],
+                            'small_token' => $invitationToken,
+                        ]);
+                    }
                 }
             }
+
+            // If no authentication and the user is logged use the cookie to get the spreadsheet information
+            if (! $bearer && $this->getUser()) {
+                $bearer = $jwt->getToken(true);
+            }
+
+            // Get the spreadsheet information
+            $result = $intrasheets->getSpreasdheet($guid, $bearer);
+
+            // There is no valid access to access this resource
+            if (! $result || isset($result['error'])) {
+                header('HTTP/1.0 403 Forbidden');
+                die("<h1>Forbidden</h1><p>You don't have permission to access the request resource.</p>");
+            }
         } else {
-            if (! $this->getUser()) {
+            if ($this->getUser()) {
+                $bearer = $jwt->getToken(true);
+            } else {
                 // The user is not authenticated
                 $this->redirect('/sheets/login', 'You must be authenticated to access this page');
             }
-        }
-
-        if ($this->getUser()) {
-            // If the user is logged get the user jwt
-            $token = $jwt->getToken(true);
         }
 
         // Return token
@@ -164,7 +175,7 @@ class Sheets extends Module
             // Unique spreadsheet identification
             'guid' => $this->getParam(1),
             // JTW of the user
-            'token' => $token,
+            'token' => $bearer,
             // Jspreadsheet license. Normally defined on your ENV files
             'license' => $_ENV['LICENSE'],
         ];

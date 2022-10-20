@@ -54,7 +54,7 @@ let Component = function() {
 
     self.generateApiKey = function() {
         jSuites.ajax({
-            url: '/sheets/profile/api',
+            url: '/sheets/key',
             method: 'GET',
             dataType: 'json',
             success: function(result) {
