@@ -1,12 +1,5 @@
 <?php
 
-/**
- * (c) 2013 Bossanova PHP Framework 5
- * http://github.com/paulhodel/bossanova
- *
- * @author: Paul Hodel <paul.hodel@gmail.com>
- * @description: Permissions Services
- */
 namespace services;
 
 use bossanova\Services\Services;
