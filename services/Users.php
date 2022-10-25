@@ -149,7 +149,7 @@ class Users extends Services
                             $content = file_get_contents($registrationFile);
 
                             // Application
-                            $row['url'] = APPLICATION_URL . '/login';
+                            $row['url'] = $_ENV['APPLICATION_URL'] . '/login';
                             // Password plain
                             $row['user_password'] = $password;
 
