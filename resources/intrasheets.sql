@@ -53,4 +53,4 @@ CREATE TABLE drive.signature
     signature_id bigserial,
     user_id bigint,
     user_signature uuid
-)
+);
