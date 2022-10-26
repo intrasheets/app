@@ -160,10 +160,8 @@ class Users extends Model
      */
     public function getUserByFacebookId($ident)
     {
-        $ident = $this->database->bind($ident);
-
         $result = $this->database->table("users")
-            ->argument(1, 'facebook_id', $ident)
+            ->argument(1, 'facebook_id', "'$ident'")
             ->execute();
 
         if ($row = $this->database->fetch_assoc($result)) {
@@ -182,10 +180,8 @@ class Users extends Model
      */
     public function getUserByGoogleId($ident)
     {
-        $ident = $this->database->bind($ident);
-
         $result = $this->database->table("users")
-            ->argument(1, 'google_id', $ident)
+            ->argument(1, 'google_id', "'$ident'")
             ->execute();
 
         if ($row = $this->database->fetch_assoc($result)) {

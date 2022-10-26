@@ -57,7 +57,14 @@ class Sheets extends Module
             }
 
             // Process the authentication request
-            return parent::login();
+            $data = parent::login();
+
+            // If all success create an API signature as default
+            if (isset($data['id']) && $data['id']) {
+                $data['url'] = '/sheets/key';
+            }
+
+            return $data;
         }
     }
 
@@ -73,7 +80,13 @@ class Sheets extends Module
         }
 
         $service = new \services\Users(new \models\Users);
-        return $service->generateKey($user_id);
+        $data = $service->generateKey($user_id);
+
+        if ($this->isAjax()) {
+            return $data;
+        } else {
+            $this->redirect('/sheets/profile');
+        }
     }
 
     /**
@@ -140,16 +153,15 @@ class Sheets extends Module
                 if ($invitation && isset($invitation['success'])) {
                     // If no bound userId or userId different from the API generate a invitation signature
                     if (! $this->getUser()) {
-                        $bearer = $jwt->createToken([
-                            'sheet_id' => $invitation['data']['sheet_id'],
-                            'small_token' => $invitationToken,
-                        ]);
+                        $jwt->sheet_id = $invitation['data']['sheet_id'];
+                        $jwt->small_token = $invitationToken;
+                        $bearer = $jwt->save();
                     }
                 }
             }
 
             // If no authentication and the user is logged use the cookie to get the spreadsheet information
-            if (! $bearer && $this->getUser()) {
+            if ($this->getUser()) {
                 $bearer = $jwt->getToken(true);
             }
 

@@ -19,7 +19,7 @@
 <p><a href="[url]">[url]</a></p>
 
 <p>^^[Best regards]^^,<br>
-^^[Jspreadsheet Team]^^</p>
+^^[Intrasheets Team]^^</p>
 
 <p>^^[This message was sent to]^^ <a href="mailto:[user_email]">[user_email]</a>.</p>
 

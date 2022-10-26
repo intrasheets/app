@@ -11,6 +11,15 @@ class Users extends Services
     public $model = null;
     public $permissions = null;
 
+    function processPost($data)
+    {
+        if (isset($data['user_signature'])) {
+            unset($data['user_signature']);
+        }
+
+        return $data;
+    }
+
     /**
      * Process the profile data before sending to the frontend
      * @param $data
@@ -167,13 +176,6 @@ class Users extends Services
                             // Send email
                             $this->mail->sendmail($t, EMAIL_REGISTRATION_SUBJECT, $content, $f);
 
-                            // If all success create an API signature as default
-                            $intrasheets = new \services\Intrasheets;
-                            $result = $intrasheets->requestKey($id);
-                            if ($result && isset($result['success'])) {
-                                $this->model->column(['user_signature'=>$result['data']['signature']])->update($id);
-                            }
-
                             $data = [
                                 'success' => 1,
                                 'message' => '^^[The user has been successfully created. An email has been sent to your email address and should be confirmed]^^',
@@ -326,6 +328,8 @@ class Users extends Services
                 ]);
 
                 return [ 'key' => $signature ];
+            } else {
+                return $data;
             }
         }
 

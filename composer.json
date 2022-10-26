@@ -7,7 +7,7 @@
     "license" : "NO-LICENCE",
     "type" : "project",
     "require" : {
-        "bossanova/bossanova" : "~v5.3.2",
+        "bossanova/bossanova" : "dev-master",
         "phpmailer/phpmailer": "dev-master",
         "sendgrid/sendgrid" : "~7.2.1"
     },

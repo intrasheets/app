@@ -11,7 +11,8 @@ class Intrasheets {
         $this->server = 'http://web/api';
     }
 
-    public function request($url, $bearer) {
+    public function request($url, $bearer)
+    {
         $headers = [
             'Accept: text/json',
             'Authorization: Bearer ' . $bearer,
