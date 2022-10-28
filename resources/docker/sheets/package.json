@@ -8,7 +8,7 @@
     "start": "supervisor dist/index.js"
   },
   "dependencies": {
-    "@jspreadsheet/server": "^2.1.4"
+    "@jspreadsheet/server": "^2.1.6"
   },
   "devDependencies": {
     "supervisor": "^0.12.0"

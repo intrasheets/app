@@ -4,20 +4,25 @@ namespace services;
 
 class Intrasheets {
 
-    public $server = null;
+    public $server = "http://web/api";
 
-    public function __construct()
+    public function __construct($server=false)
     {
-        $this->server = 'http://web/api';
+        if ($server) {
+            $this->server = $server;
+        }
     }
 
     public function request($url, $bearer)
     {
         $headers = [
             'Accept: text/json',
-            'Authorization: Bearer ' . $bearer,
             'Content-Type' => 'application/x-www-form-urlencoded'
         ];
+
+        if ($bearer) {
+            $headers[] = 'Authorization: Bearer ' . $bearer;
+        }
 
         // URL
         $curl = curl_init($url);
