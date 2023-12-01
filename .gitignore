@@ -6,5 +6,4 @@
 /resources/docker/sheets/node_modules/
 /resources/docker/sheets/package-lock.json
 composer.lock
-/resources/docker/sheets/package-lock.json
 .env

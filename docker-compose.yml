@@ -16,7 +16,7 @@ services:
       working_dir: /var/www/html
 
     pgadmin:
-        image: dpage/pgadmin4:4.18
+        image: dpage/pgadmin4:latest
         restart: always
         environment:
           PGADMIN_DEFAULT_EMAIL: postgres
@@ -41,7 +41,7 @@ services:
         - 8021:8025
 
     web:
-      build: ./resources/docker/aws
+      build: ./resources/docker/web
       ports:
         - 8000:80
         - 8001:443
